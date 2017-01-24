@@ -1,10 +1,11 @@
 import numpy as np
 
 class RNN:
-    def __init__(self, input_dim, hidden_dim, output_dim):
+    def __init__(self, input_dim, hidden_dim, output_dim, bptt_truncate=10):
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
+        self.bptt_truncate = bptt_truncate
         self.b = np.random.normal(0, 1e-2, hidden_dim)
         self.c = np.random.normal(0, 1e-2, output_dim)
         self.U = np.random.uniform(-np.sqrt(1. / input_dim),
@@ -22,7 +23,7 @@ class RNN:
         h = np.zeros((T + 1, self.hidden_dim))
         y_hat = np.zeros((T, self.output_dim))
         for t in range(T):
-            a_t = np.dot(self.W, h[t-1]) + np.dot(self.U, x[t]) + self.b
+            a_t = np.dot(self.W, h[t-1]) + self.U[:, x[t]] + self.b
             h_t = np.tanh(a_t)
             o_t = np.dot(self.V, h_t) + self.c
             y_hat_t = np.exp(o_t - np.max(o_t)) / np.sum(np.exp(o_t - np.max(o_t)))
@@ -40,7 +41,7 @@ class RNN:
         L = 0
         h, y_hat = self.forward_propagation(x) 
         for t in range(T):
-            L += -np.log(y_hat[t, np.argmax(y[t])])
+            L += -np.log(y_hat[t, y[t]])
         return L
 
     def loss_avg(self, X, Y):
@@ -60,18 +61,17 @@ class RNN:
         dLdW = np.zeros(self.W.shape)
         dLdb, dLdc = 0, 0
         delta__h_t_1 = np.zeros(self.hidden_dim)
-        for t in np.arange(T)[::-1]:
-            delta__o_t = y_hat[t] - y[t]
+        for t in np.arange(max(0, T - self.bptt_truncate), T)[::-1]:
+            delta__o_t = y_hat[t]
+            delta__o_t[y[t]] -= 1.
             delta__h_t = np.dot(self.V.T, delta__o_t) + \
                          np.dot(self.W.T, delta__h_t_1)
+            dh_da = 1 - np.square(h[t])
             dLdV += np.outer(delta__o_t, h[t].T)
-            dLdW += np.dot(np.diag(1 - np.square(h[t])),
-                           np.outer(delta__h_t, h[t-1]))
-            dLdU += np.dot(np.diag(1 - np.square(h[t])),
-                           np.outer(delta__h_t, x[t]))
+            dLdW += np.dot(np.diag(dh_da), np.outer(delta__h_t, h[t-1]))
+            dLdU[:, x[t]] += dh_da * delta__h_t
             dLdc += delta__o_t
-            dLdb += np.dot(np.diag(1 - np.square(h[t])),
-                           delta__h_t)
+            dLdb += dh_da * delta__h_t
             delta__h_t_1 = delta__h_t
         return dLdU, dLdV, dLdW, dLdb, dLdc
 

@@ -9,8 +9,6 @@ X = np.random.randint(1, num_vocab - 1, (1000, 10))
 Y = X + 1
 
 net = RNN(num_vocab, num_hidden, num_vocab)
-X_one_hot = net.one_hot(X, num_vocab)
-Y_one_hot = net.one_hot(Y, num_vocab)
-net.train(X_one_hot, Y_one_hot, 10000)
-test_seq = net.one_hot([1, 2, 3, 4, 5, 6, 7, 8], num_vocab)
+net.train(X, Y, 10000)
+test_seq = [1, 2, 3, 4, 5, 6, 7, 8]
 print(net.predict(test_seq))
