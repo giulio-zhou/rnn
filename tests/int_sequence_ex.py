@@ -1,4 +1,5 @@
 from rnn import RNN
+from lstm import LSTM
 import numpy as np
 
 # Generate dataset, create random sequences of integers
@@ -12,3 +13,8 @@ net = RNN(num_vocab, num_hidden, num_vocab)
 net.train(X, Y, 10000)
 test_seq = [1, 2, 3, 4, 5, 6, 7, 8]
 print(net.predict(test_seq))
+
+lstm_net = LSTM(num_vocab, num_hidden, num_vocab)
+lstm_net.train(X, Y, 10000, 0.1)
+test_seq = [1, 2, 3, 4, 5, 6, 7, 8]
+print(lstm_net.predict(test_seq))
