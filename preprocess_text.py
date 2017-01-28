@@ -2,7 +2,9 @@ import itertools
 import nltk
 import numpy as np
 import pandas as pd
+import string
 import sys
+from util import pickle
 
 vocabulary_size = 8000
 unknown_token = "UNKNOWN_TOKEN"
@@ -12,6 +14,12 @@ sentence_end_token = "SENTENCE_END"
 def process_shakespeare(path):
     data = pd.read_csv(path, delimiter=';',
             names=['line', 'title', 'stmt', 'part', 'speaker', 'text'])
+    data = data[data.title == "Hamlet"]
+    return data.text.tolist()
+
+def process_twitter(path):
+    data = pd.read_csv(path, delimiter='|',
+            names=['handle', 'timestamp', 'date', 'text'])
     return data.text.tolist()
 
 def process_sentences_as_words(data):
@@ -35,5 +43,34 @@ def process_sentences_as_words(data):
     print("Sentence after tokenization: %s" % tokenized_sentences[0])
     return index_to_word, word_to_index, tokenized_sentences
 
-data = process_shakespeare(sys.argv[1])
-index_to_word, word_to_index, tokenized_sentences = process_sentences_as_words(data)
+def generate_text(model, index_to_word, word_to_index, num_sentences):
+    sentences = []
+    for i in range(num_sentences):
+        sentences.append(generate_sentence(model, index_to_word, word_to_index))
+    return sentences
+
+def generate_sentence(model, index_to_word, word_to_index):
+    new_sentence = [word_to_index[sentence_start_token]]
+    while index_to_word[new_sentence[-1]] != sentence_end_token:
+        probs = model.forward_probs(new_sentence)[-1]
+        next_word = word_to_index[unknown_token]
+        while next_word == word_to_index[unknown_token] or \
+              next_word == word_to_index[sentence_start_token]:
+            samples = np.random.multinomial(1, probs)
+            # handle case where less than num_vocab words
+            next_word = min(np.argmax(samples), word_to_index[unknown_token])
+        new_sentence.append(next_word)
+    # Remove start and end
+    new_sentence = new_sentence[1:-1]
+    new_sentence = ' '.join(map(lambda x: index_to_word[x], new_sentence))
+    return new_sentence
+
+if __name__ == '__main__':
+    # data = process_twitter(sys.argv[1])
+    # printable = set(string.printable)
+    # data = map(lambda x: filter(lambda y: y in printable, x), data)
+    # print(data)
+    data = process_shakespeare(sys.argv[1])
+    index_to_word, word_to_index, tokenized_sentences = process_sentences_as_words(data)
+    print(len(index_to_word), len(word_to_index))
+    pickle((index_to_word, word_to_index), 'data/hamlet.pickle')

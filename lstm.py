@@ -69,6 +69,11 @@ class LSTM:
         gates = [f, g, q]
         return x_inputs, hidden_states, gates, y_hat
 
+    # Forward propagation but only output probs
+    def forward_probs(self, x):
+        x_inputs, hidden_states, gates, y_hat = self.forward_propagation(x)
+        return y_hat
+
     def bptt(self, x, y):
         T = len(x)
         x_inputs, hidden_states, gates, y_hat = self.forward_propagation(x)
