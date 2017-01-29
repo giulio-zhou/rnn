@@ -161,7 +161,10 @@ class LSTM:
             idx = np.random.randint(len(x))
             self.sgd_step(x[idx], y[idx], weights_dict, alpha)
             if i % EXAMPLES_PER_EPOCH == 0:
-                print("Loss @{}: {}".format(i, self.loss_avg(x, y)))
+                # print("Loss @{}: {}".format(i, self.loss_avg(x, y)))
+                idx = np.random.choice(np.arange(len(x)), int(0.1 * len(x)), False)
+                x_sample, y_sample = np.array(x)[idx], np.array(y)[idx]
+                print("Loss @{}: {}".format(i, self.loss_avg(x_sample, y_sample)))
 
     def gradient_check_one_elem(self, x, y, grad_dict,
                                 weights_dict, key, eps=1e-10):

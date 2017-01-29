@@ -1,5 +1,5 @@
-from lstm import LSTM
-from rnn import RNN
+from network.lstm import LSTM
+from network.rnn import RNN
 import numpy as np
 
 # Generate dataset, create random sequences of integers

@@ -1,4 +1,4 @@
-from lstm import LSTM
+from network.lstm import LSTM
 from preprocess_text import process_twitter
 from preprocess_text import process_sentences_as_char 
 from preprocess_text import vocabulary_size as vocab_size

@@ -1,5 +1,5 @@
-from rnn import RNN
-from lstm import LSTM
+from network.rnn import RNN
+from network.lstm import LSTM
 import numpy as np
 
 np.random.seed(1)

@@ -1,4 +1,4 @@
-from lstm import LSTM
+from network.lstm import LSTM
 from preprocess_text import process_shakespeare, process_sentences_as_words
 from preprocess_text import vocabulary_size as vocab_size
 from util import pickle, unpickle 
