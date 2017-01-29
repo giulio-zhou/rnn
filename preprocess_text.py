@@ -43,6 +43,15 @@ def process_sentences_as_words(data):
     print("Sentence after tokenization: %s" % tokenized_sentences[0])
     return index_to_word, word_to_index, tokenized_sentences
 
+def process_sentences_as_char(data):
+    num_vocab = 128 + 2 # ASCII characters and SENTENCE_START/END
+    printable = set(string.printable)
+    index_to_word = [chr(i) for i in range(128)] + \
+                    [sentence_start_token, sentence_end_token]
+    word_to_index = {token: i for i, token in enumerate(index_to_word)}
+    filtered_data = map(lambda x: filter(lambda y: y in printable, x), data)
+    return index_to_word, word_to_index, filtered_data
+
 def generate_text(model, index_to_word, word_to_index, num_sentences):
     sentences = []
     for i in range(num_sentences):
@@ -51,6 +60,8 @@ def generate_text(model, index_to_word, word_to_index, num_sentences):
 
 def generate_sentence(model, index_to_word, word_to_index):
     new_sentence = [word_to_index[sentence_start_token]]
+    print(index_to_word)
+    print(len(index_to_word))
     while index_to_word[new_sentence[-1]] != sentence_end_token:
         probs = model.forward_probs(new_sentence)[-1]
         next_word = word_to_index[unknown_token]
@@ -65,12 +76,25 @@ def generate_sentence(model, index_to_word, word_to_index):
     new_sentence = ' '.join(map(lambda x: index_to_word[x], new_sentence))
     return new_sentence
 
+def generate_char_sentence(model, index_to_word, word_to_index):
+    new_sentence = [word_to_index[sentence_start_token]]
+    while index_to_word[new_sentence[-1]] != sentence_end_token:
+        probs = model.forward_probs(new_sentence)[-1]
+        samples = np.random.multinomial(1, probs)
+        next_word = np.argmax(samples)
+        new_sentence.append(next_word)
+        if len(new_sentence) == 140:
+            break
+    new_sentence = new_sentence[1:-1]
+    new_sentence = ''.join(map(lambda x: index_to_word[x], new_sentence))
+    return new_sentence
+
 if __name__ == '__main__':
-    # data = process_twitter(sys.argv[1])
-    # printable = set(string.printable)
-    # data = map(lambda x: filter(lambda y: y in printable, x), data)
-    # print(data)
-    data = process_shakespeare(sys.argv[1])
-    index_to_word, word_to_index, tokenized_sentences = process_sentences_as_words(data)
-    print(len(index_to_word), len(word_to_index))
-    pickle((index_to_word, word_to_index), 'data/hamlet.pickle')
+    data = process_twitter(sys.argv[1])
+    printable = set(string.printable)
+    index_to_char, char_to_index, tokenized_sentences = process_sentences_as_char(data)
+    pickle((index_to_char, char_to_index), 'data/trump.pickle')
+    # data = process_shakespeare(sys.argv[1])
+    # index_to_word, word_to_index, tokenized_sentences = process_sentences_as_words(data)
+    # print(len(index_to_word), len(word_to_index))
+    # pickle((index_to_word, word_to_index), 'data/hamlet.pickle')
